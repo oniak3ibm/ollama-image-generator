@@ -172,11 +172,11 @@ mindmap
     Backend
       Node.js
       Express.js
-      Child Process
+      Axios HTTP Client
       CORS
     AI/ML
-      Ollama CLI
-      flux-klein:9b
+      Ollama HTTP API
+      flux2-klein:4b
       z-image-turbo:fp8
     DevOps
       Docker

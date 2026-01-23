@@ -47,16 +47,16 @@ sequenceDiagram
     participant M as AI Model
 
     U->>B: Enter prompt & select model
-    B->>S: POST /api/generate {prompt, model}
+    B->>S: POST /api/generate with prompt and model
     S->>S: Validate request
-    S->>O: POST /api/generate {model, prompt, stream:false}
+    S->>O: POST /api/generate with model, prompt, stream false
     O->>M: Load model & process prompt
     M->>M: Generate image (10-30s)
     M->>O: Return base64 PNG
-    O->>S: Newline-delimited JSON with 'image' field
+    O->>S: Newline-delimited JSON with image field
     S->>S: Parse response & extract base64 data
-    S->>B: JSON {success, result: "data:image/png;base64,..."}
-    B->>B: Create <img> element
+    S->>B: JSON response with base64 image data URI
+    B->>B: Create img element with data URI
     B->>U: Display generated image
 ```
 

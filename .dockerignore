@@ -1,0 +1,64 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+server.log
+
+# Process files
+.server.pid
+
+# Documentation
+README.md
+docs/
+
+# Scripts (not needed in container)
+start.sh
+stop.sh
+push-to-github.sh
+
+# Kubernetes files
+k8s/
+*.yaml
+*.yml
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Test files
+test/
+*.test.js
+*.spec.js
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/

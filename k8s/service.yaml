@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-image-generator
+  labels:
+    app: ollama-image-generator
+spec:
+  type: LoadBalancer
+  selector:
+    app: ollama-image-generator
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+# Made with Bob

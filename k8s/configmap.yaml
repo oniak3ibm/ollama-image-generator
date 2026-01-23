@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ollama-image-generator-config
+  labels:
+    app: ollama-image-generator
+data:
+  # Ollama service URL
+  # Update this to point to your Ollama service
+  # For local development: http://localhost:11434
+  # For Kubernetes: http://ollama-service:11434
+  ollama_url: "http://ollama-service:11434"
+  
+  # Application port
+  port: "3000"
+  
+  # Node environment
+  node_env: "production"
+
+# Made with Bob

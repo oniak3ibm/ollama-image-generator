@@ -38,11 +38,16 @@ fi
 
 # Check if port 3000 is already in use
 if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "⚠️  Warning: Port 3000 is already in use"
+    echo "⚠️  Port 3000 is already in use"
     PID=$(lsof -Pi :3000 -sTCP:LISTEN -t)
-    echo "   Process using port 3000: PID $PID"
-    echo "   Run ./stop.sh to stop the existing process"
-    exit 1
+    echo "   Stopping existing process (PID: $PID)..."
+    kill $PID 2>/dev/null || kill -9 $PID 2>/dev/null
+    if ps -p $PID > /dev/null 2>&1; then
+        echo "Failed to stop existing process"
+        exit 1
+    fi
+    sleep 2
+    echo "✅ Existing process stopped"
 fi
 
 # Start the server

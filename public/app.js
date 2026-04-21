@@ -55,7 +55,13 @@ async function generateImage() {
     loader.style.display = 'block';
     
     // Clear previous result
-    resultContainer.innerHTML = '<div class="placeholder"><p>Generating your image...</p></div>';
+    resultContainer.innerHTML = '';
+    const placeholder = document.createElement('div');
+    placeholder.className = 'placeholder';
+    const p = document.createElement('p');
+    p.textContent = 'Generating your image...';
+    placeholder.appendChild(p);
+    resultContainer.appendChild(placeholder);
     
     try {
         const response = await fetch('/api/generate', {
@@ -70,7 +76,7 @@ async function generateImage() {
         
         if (data.success) {
             displayResult(data, prompt, model);
-            addToHistory(prompt, model, data.result);
+            addToHistory(prompt, model, data.result, data.memoryUsage);
         } else {
             displayError(data.error || 'Failed to generate image');
         }
@@ -100,7 +106,7 @@ function displayResult(data, prompt, model) {
         // Add download button
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'download-btn';
-        downloadBtn.innerHTML = '⬇️ Download Image';
+        downloadBtn.textContent = '⬇️ Download Image';
         downloadBtn.onclick = () => downloadImage(data.result, prompt);
         resultContent.appendChild(downloadBtn);
     } else {
@@ -114,10 +120,18 @@ function displayResult(data, prompt, model) {
     // Add info section
     const infoDiv = document.createElement('div');
     infoDiv.className = 'result-info';
-    infoDiv.innerHTML = `
-        <strong>Model:</strong> ${model}<br>
-        <strong>Prompt:</strong> ${prompt}
-    `;
+    
+    const modelLabel = document.createElement('strong');
+    modelLabel.textContent = 'Model:';
+    infoDiv.appendChild(modelLabel);
+    infoDiv.appendChild(document.createTextNode(' ' + model));
+    infoDiv.appendChild(document.createElement('br'));
+    
+    const promptLabel = document.createElement('strong');
+    promptLabel.textContent = 'Prompt:';
+    infoDiv.appendChild(promptLabel);
+    infoDiv.appendChild(document.createTextNode(' ' + prompt));
+    
     resultContent.appendChild(infoDiv);
     
     resultContainer.innerHTML = '';
@@ -142,8 +156,11 @@ function downloadImage(imageDataUrl, defaultPrompt) {
     // If user cancels, don't download
     if (!filename) return;
     
+    // Remove all path separators to prevent directory traversal
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    
     // Ensure filename has .png extension
-    const finalFilename = filename.endsWith('.png') ? filename : `${filename}.png`;
+    const finalFilename = sanitizedFilename.endsWith('.png') ? sanitizedFilename : `${sanitizedFilename}.png`;
     
     // Create a temporary link element and trigger download
     const link = document.createElement('a');
@@ -156,22 +173,38 @@ function downloadImage(imageDataUrl, defaultPrompt) {
 
 // Display error message
 function displayError(message) {
-    resultContainer.innerHTML = `
-        <div class="error-message">
-            <strong>Error:</strong> ${message}
-            <br><br>
-            <small>Make sure Ollama is running and the models are installed.</small>
-        </div>
-    `;
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    
+    const strong = document.createElement('strong');
+    strong.textContent = 'Error:';
+    
+    const messageText = document.createTextNode(' ' + message);
+    
+    const br1 = document.createElement('br');
+    const br2 = document.createElement('br');
+    
+    const small = document.createElement('small');
+    small.textContent = 'Make sure Ollama is running and the models are installed.';
+    
+    errorDiv.appendChild(strong);
+    errorDiv.appendChild(messageText);
+    errorDiv.appendChild(br1);
+    errorDiv.appendChild(br2);
+    errorDiv.appendChild(small);
+    
+    resultContainer.innerHTML = '';
+    resultContainer.appendChild(errorDiv);
 }
 
 // Add to history
-function addToHistory(prompt, model, result) {
+function addToHistory(prompt, model, result, memoryUsage) {
     const historyItem = {
         prompt,
         model,
         result,
-        timestamp: new Date().toLocaleString()
+        timestamp: new Date().toLocaleString(),
+        memoryUsage: memoryUsage || null
     };
     
     generationHistory.unshift(historyItem);
@@ -189,18 +222,39 @@ function updateHistoryDisplay() {
     historyList.innerHTML = '';
     
     if (generationHistory.length === 0) {
-        historyList.innerHTML = '<p style="color: #9ca3af; text-align: center;">No generation history yet</p>';
+        const emptyMessage = document.createElement('p');
+        emptyMessage.style.color = '#9ca3af';
+        emptyMessage.style.textAlign = 'center';
+        emptyMessage.textContent = 'No generation history yet';
+        historyList.appendChild(emptyMessage);
         return;
     }
     
     generationHistory.forEach((item, index) => {
         const historyItemDiv = document.createElement('div');
         historyItemDiv.className = 'history-item';
-        historyItemDiv.innerHTML = `
-            <div class="history-item-prompt">${item.prompt}</div>
-            <div class="history-item-model">${item.model}</div>
-            <div class="history-item-time">${item.timestamp}</div>
-        `;
+        
+        const promptDiv = document.createElement('div');
+        promptDiv.className = 'history-item-prompt';
+        promptDiv.textContent = item.prompt;
+        historyItemDiv.appendChild(promptDiv);
+        
+        const modelDiv = document.createElement('div');
+        modelDiv.className = 'history-item-model';
+        modelDiv.textContent = item.model;
+        historyItemDiv.appendChild(modelDiv);
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'history-item-time';
+        timeDiv.textContent = item.timestamp;
+        historyItemDiv.appendChild(timeDiv);
+        
+        if (item.memoryUsage) {
+            const memoryDiv = document.createElement('div');
+            memoryDiv.className = 'history-item-memory';
+            memoryDiv.textContent = `Memory: RSS +${item.memoryUsage.rssDiff}MB, Heap +${item.memoryUsage.heapUsedDiff}MB`;
+            historyItemDiv.appendChild(memoryDiv);
+        }
         
         historyItemDiv.addEventListener('click', () => {
             promptInput.value = item.prompt;
@@ -213,8 +267,9 @@ function updateHistoryDisplay() {
 }
 
 // Allow Enter key to submit (with Shift+Enter for new line)
+// Ignore Enter key during Japanese IME composition
 promptInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
         generateImage();
     }

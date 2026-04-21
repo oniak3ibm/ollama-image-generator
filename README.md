@@ -2,6 +2,11 @@
 
 A graphical web application for generating images using local Ollama models.
 
+元のアプリに対して、主に3つの改良を加えています。
+* 日本語入力対応
+* セキュリティー強化
+* start.sh の改善
+
 ## Features
 
 - 🎨 Clean and modern user interface
